@@ -1,8 +1,9 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
 import socket
 import time
 import smtplib
 from urllib.request import urlopen
-from subprocess import check_output
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 import os
@@ -10,8 +11,8 @@ from email.mime.image import MIMEImage
 
 
 # 发送邮件的基本函数，参数依次如下
-# smtp服务器地址、邮箱用户名，邮箱秘密，发件人地址，手贱儿女地址（列表的方式），邮件主题，邮件html内容
-def sendEmail(smtpserver, username, password, sender, receiver, subject, msghtml):
+# smtp服务器地址，端口（默认0），邮箱用户名，邮箱秘密，发件人地址，手贱儿女地址（列表的方式），邮件主题，邮件html内容
+def sendEmail(smtpserver, port, username, password, sender, receiver, subject, msghtml):
     msgRoot = MIMEMultipart('related')
     msgRoot["To"] = ','.join(receiver)
     msgRoot["From"] = sender
@@ -20,7 +21,8 @@ def sendEmail(smtpserver, username, password, sender, receiver, subject, msghtml
     msgRoot.attach(msgText)
     # sendEmail
     smtp = smtplib.SMTP()
-    smtp.connect(smtpserver)
+    smtp.connect(smtpserver,port=port)
+    smtp.starttls()
     smtp.login(username, password)
     smtp.sendmail(sender, receiver, msgRoot.as_string())
     smtp.quit()
@@ -47,7 +49,7 @@ def check_network():
 def get_ip_address():
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     s.connect(("1.1.1.1", 80))
-    ipaddr = s.getsockname()[0]
+    ipaddr = s.getsockname()
     s.close()
     return ipaddr
 
@@ -60,7 +62,7 @@ def check_ssid():
                         | awk -F\\\" '{print $2}'").read()
     except EnvironmentError as e:
         print(e)
-        return ssid
+    return ssid
 
 if __name__ == '__main__':
     check_network()
@@ -69,5 +71,5 @@ if __name__ == '__main__':
     email_add = 'xxx@xxx.com'
     content = "SSID:%s \nIP:%s" % (ssid,ipaddr)
     print(content)
-    sendEmail('smtp.126.com', 'youremailaddress', 'yourpassword',
+    sendEmail('smtp.gmail.com', 587, 'youremailaddress', 'yourpassword',
               email_add, [email_add], 'IP Address Of Raspberry Pi', content)
